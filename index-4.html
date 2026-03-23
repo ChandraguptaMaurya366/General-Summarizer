@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WikiResearcher - Intelligent Knowledge Discovery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- MathJax for rendering mathematical equations -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --cream: #FAF8F3;
+            --gold: #D4AF37;
+            --gold-dark: #B8941F;
+            --gold-light: #E8D090;
+            --charcoal: #2C2C2C;
+            --charcoal-light: #4A4A4A;
+            --white: #FFFFFF;
+            --shadow: rgba(212, 175, 55, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, var(--cream) 0%, #F5F1E8 100%);
+            color: var(--charcoal);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Landing Page Styles */
+        .landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .landing::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(212, 175, 55, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 1rem;
+            text-align: center;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            font-size: clamp(0.8rem, 2vw, 1.1rem);
+            color: var(--charcoal-light);
+            margin-bottom: clamp(2rem, 5vh, 4rem);
+            text-align: center;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-container {
+            display: flex;
+            gap: clamp(1rem, 3vw, 2rem);
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1400px;
+            position: relative;
+            z-index: 1;
+            padding: 0 1rem;
+        }
+
+        .language-card {
+            width: clamp(140px, 18vw, 220px);
+            height: clamp(200px, 25vw, 300px);
+            background: var(--white);
+            border: 3px solid var(--gold);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.3rem, 3vw, 2rem);
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.1),
+                0 1px 8px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .language-card::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .language-card::after {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border-radius: 12px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+            pointer-events: none;
+        }
+
+        .language-card.active {
+            transform: translateY(-10px) rotateX(5deg) rotateY(-5deg) scale(1.05);
+            box-shadow: 
+                0 25px 50px var(--shadow),
+                0 15px 30px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            border-color: var(--gold-dark);
+        }
+
+        .language-card.active::before {
+            opacity: 1;
+        }
+
+        .language-card:not(.disabled):hover {
+            transform: translateY(-15px) rotateX(8deg) rotateY(-8deg) scale(1.08);
+            box-shadow: 
+                0 30px 60px var(--shadow),
+                0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .language-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Search Screen Styles */
+        .search-screen {
+            display: none;
+            min-height: 100vh;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .search-screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .back-button {
+            position: fixed;
+            top: clamp(20px, 3vw, 30px);
+            left: clamp(20px, 3vw, 30px);
+            background: transparent;
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            padding: clamp(8px, 1.5vw, 12px) clamp(16px, 3vw, 24px);
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(0.8rem, 1.8vw, 0.9rem);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.05em;
+            z-index: 20;
+        }
+
+        .back-button:hover {
+            background: var(--gold);
+            color: var(--white);
+            transform: translateX(-5px);
+        }
+
+        .back-button:active {
+            transform: translateX(-5px) scale(0.95);
+        }
+
+        .search-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 20px 80px;
+            width: 100%;
+        }
+
+        .search-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .search-box-wrapper {
+            width: 90%;
+            max-width: 600px;
+            aspect-ratio: 5 / 2;
+            position: relative;
+        }
+
+        .search-box {
+            width: 100%;
+            height: 100%;
+            background: var(--white);
+            border: 3px solid var(--gold);
+            border-radius: 16px;
+            padding: clamp(15px, 3%, 25px) clamp(50px, 12%, 70px) clamp(15px, 3%, 25px) clamp(20px, 5%, 35px);
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+            color: var(--charcoal);
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.1),
+                inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            resize: none;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        .search-box:focus {
+            border-color: var(--gold-dark);
+            box-shadow: 
+                0 15px 40px var(--shadow),
+                inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-box::placeholder {
+            color: var(--charcoal-light);
+            opacity: 0.5;
+        }
+
+        .search-error {
+            color: #d32f2f;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            display: none;
+        }
+
+        .search-error.show {
+            display: block;
+        }
+
+        .search-button {
+            position: absolute;
+            right: clamp(10px, 2%, 18px);
+            bottom: clamp(10px, 2%, 18px);
+            width: clamp(40px, 8vw, 55px);
+            height: clamp(40px, 8vw, 55px);
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .search-button:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+
+        .search-button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .search-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .search-button svg {
+            width: clamp(18px, 4vw, 24px);
+            height: clamp(18px, 4vw, 24px);
+            fill: var(--white);
+        }
+
+        /* Results Screen */
+        .results-screen {
+            display: none;
+            min-height: 100vh;
+            padding: clamp(20px, 4vw, 40px);
+            padding-top: 80px;
+        }
+
+        .results-screen.active {
+            display: block;
+        }
+
+        .results-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--white);
+            border: 2px solid var(--gold-light);
+            border-radius: 20px;
+            padding: clamp(30px, 6vw, 60px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .results-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: clamp(20px, 5%, 40px);
+            right: clamp(20px, 5%, 40px);
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .research-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 1rem;
+            text-align: center;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .research-query {
+            font-size: clamp(0.85rem, 2vw, 1rem);
+            color: var(--gold-dark);
+            text-align: center;
+            margin-bottom: 1rem;
+            font-style: italic;
+            font-weight: 500;
+        }
+
+        .research-meta {
+            font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+            color: var(--charcoal-light);
+            text-align: center;
+            margin-bottom: clamp(2rem, 4vw, 3rem);
+        }
+
+        .narrative {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(0.9rem, 2vw, 1.05rem);
+            line-height: 1.8;
+            color: var(--charcoal);
+            margin-bottom: clamp(2rem, 4vw, 3rem);
+            text-align: justify;
+        }
+
+        .narrative p {
+            margin-bottom: 1.5rem;
+        }
+
+        .narrative img {
+            max-width: 100%;
+            height: auto;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .narrative .section-header {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            font-weight: 600;
+            color: var(--charcoal);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--gold-light);
+            padding-bottom: 0.5rem;
+        }
+
+        .citation {
+            color: var(--gold-dark);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 0.85em;
+            vertical-align: super;
+            margin-left: 1px;
+        }
+
+        .citation:hover {
+            text-decoration: underline;
+        }
+
+        .narrative h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            font-weight: 600;
+            color: var(--charcoal);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--gold-light);
+            padding-bottom: 0.5rem;
+        }
+
+        .narrative table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: clamp(0.75rem, 1.8vw, 0.95rem);
+            overflow-x: auto;
+            display: block;
+        }
+
+        .narrative table th {
+            background: var(--gold-light);
+            color: var(--charcoal);
+            padding: clamp(8px, 2vw, 12px);
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid var(--gold);
+        }
+
+        .narrative table td {
+            padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 12px);
+            border: 1px solid var(--gold-light);
+        }
+
+        .narrative table tr:nth-child(even) {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .math-equation {
+            margin: 1.5rem 0;
+            padding: clamp(1rem, 2vw, 1.5rem);
+            background: rgba(212, 175, 55, 0.05);
+            border-left: 4px solid var(--gold);
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: clamp(0.85rem, 1.8vw, 1rem);
+        }
+
+        .references-section {
+            border-top: 2px solid var(--gold-light);
+            padding-top: 2rem;
+            margin-top: clamp(2rem, 4vw, 3rem);
+        }
+
+        .references-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            font-weight: 600;
+            color: var(--charcoal);
+            margin-bottom: 1.5rem;
+        }
+
+        .reference {
+            margin-bottom: 1.2rem;
+            padding-left: clamp(1.5rem, 3vw, 2rem);
+            position: relative;
+            font-size: clamp(0.8rem, 1.8vw, 0.95rem);
+            line-height: 1.6;
+        }
+
+        .reference::before {
+            content: '[' counter(ref) ']';
+            counter-increment: ref;
+            position: absolute;
+            left: 0;
+            color: var(--gold-dark);
+            font-weight: 600;
+        }
+
+        .references-section {
+            counter-reset: ref;
+        }
+
+        .reference a {
+            color: var(--gold-dark);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s ease;
+            word-break: break-word;
+        }
+
+        .reference a:hover {
+            border-bottom-color: var(--gold-dark);
+        }
+
+        .reference {
+            transition: background-color 0.3s ease;
+        }
+
+        .new-search-button {
+            display: block;
+            margin: 3rem auto 0;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--white);
+            border: none;
+            padding: clamp(12px, 2vw, 16px) clamp(30px, 5vw, 40px);
+            border-radius: 30px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px var(--shadow);
+            letter-spacing: 0.05em;
+        }
+
+        .new-search-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px var(--shadow);
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: clamp(20px, 4vw, 40px);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        #neuralCanvas {
+            width: 100%;
+            max-width: 600px;
+            height: clamp(250px, 50vw, 400px);
+            margin: 0 auto 2rem;
+            display: block;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.02));
+        }
+
+        .loading-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            font-weight: 600;
+            color: var(--charcoal);
+            margin-bottom: 2rem;
+        }
+
+        /* Chain of Thought Display */
+        .thought-chain {
+            text-align: left;
+            background: var(--white);
+            border: 2px solid var(--gold-light);
+            border-radius: 12px;
+            padding: clamp(1rem, 3vw, 2rem);
+            margin-top: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .thought-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        .thought-step:last-child {
+            margin-bottom: 0;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .step-icon {
+            width: clamp(30px, 6vw, 36px);
+            height: clamp(30px, 6vw, 36px);
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+            color: var(--white);
+            font-weight: 600;
+            font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+        }
+
+        .step-icon.completed {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .step-icon.active {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(212, 175, 55, 0);
+            }
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--charcoal);
+            font-size: clamp(0.85rem, 2vw, 1rem);
+            margin-bottom: 0.3rem;
+        }
+
+        .step-detail {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+            color: var(--charcoal-light);
+            line-height: 1.5;
+        }
+
+        .step-detail.success {
+            color: #4CAF50;
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .language-card {
+            animation: fadeIn 0.6s ease backwards;
+        }
+
+        .language-card:nth-child(1) { animation-delay: 0.1s; }
+        .language-card:nth-child(2) { animation-delay: 0.2s; }
+        .language-card:nth-child(3) { animation-delay: 0.3s; }
+        .language-card:nth-child(4) { animation-delay: 0.4s; }
+        .language-card:nth-child(5) { animation-delay: 0.5s; }
+
+        /* Mobile optimization */
+        @media (max-width: 768px) {
+            .search-container {
+                justify-content: flex-start;
+                padding-top: 100px;
+            }
+
+            .search-box-wrapper {
+                width: 100%;
+                aspect-ratio: auto;
+                min-height: 120px;
+            }
+
+            .search-box {
+                min-height: 120px;
+                padding: 15px 50px 15px 20px;
+            }
+
+            .back-button {
+                position: fixed;
+                z-index: 20;
+            }
+
+            .results-container {
+                margin-top: 20px;
+            }
+
+            .narrative {
+                text-align: left;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .language-card {
+                width: 100%;
+                max-width: 200px;
+                height: 150px;
+            }
+
+            .search-title {
+                font-size: 1.5rem;
+            }
+
+            .results-container {
+                border-radius: 12px;
+                padding: 20px;
+            }
+
+            .research-title {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Landing Page -->
+    <div class="landing" id="landing">
+        <h1>WikiResearcher</h1>
+        <p class="subtitle">INTELLIGENT KNOWLEDGE DISCOVERY</p>
+        <div class="card-container" id="languageContainer">
+            <!-- Languages will be dynamically inserted -->
+        </div>
+    </div>
+
+    <!-- Search Screen -->
+    <div class="search-screen" id="searchScreen">
+        <button class="back-button" onclick="goBack()" aria-label="Go back to language selection">← BACK</button>
+        <div class="search-container">
+            <h2 class="search-title">What would you like to explore?</h2>
+            <div class="search-box-wrapper">
+                <textarea 
+                    class="search-box" 
+                    id="searchInput"
+                    placeholder="Enter your research topic..."
+                    onkeypress="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); performSearch(); }"
+                    maxlength="500"
+                ></textarea>
+                <button class="search-button" id="searchBtn" onclick="performSearch()" aria-label="Search">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="search-error" id="searchError"></div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div class="results-screen" id="resultsScreen">
+        <button class="back-button" onclick="goToSearch()" aria-label="Go back to search">← BACK</button>
+        <div class="loading" id="loading">
+            <h3 class="loading-title">Researching Knowledge...</h3>
+            <canvas id="neuralCanvas"></canvas>
+            <div class="thought-chain" id="thoughtChain"></div>
+        </div>
+        <div class="results-container" id="resultsContainer" style="display: none;">
+            <h2 class="research-title" id="researchTitle"></h2>
+            <p class="research-query" id="researchQuery"></p>
+            <p class="research-meta" id="researchMeta"></p>
+            <div class="narrative" id="narrative"></div>
+            <div class="references-section">
+                <h3 class="references-title">References</h3>
+                <div id="references"></div>
+            </div>
+            <button class="new-search-button" onclick="goToSearch()">New Search</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration object - centralized settings
+        const CONFIG = {
+            languages: {
+                english: { code: 'en', name: 'English' },
+                hindi: { code: 'hi', name: 'Hindi' },
+                bengali: { code: 'bn', name: 'Bengali' },
+                french: { code: 'fr', name: 'French' },
+                german: { code: 'de', name: 'German' }
+            },
+            contentLimits: {
+                minQueryLength: 2,
+                maxQueryLength: 500,
+                sentenceMinLength: 30,
+                maxArticles: 5,
+                maxSearchVariations: 3,
+                minSentencePool: 0
+            },
+            searchSteps: [
+                'Analyzing Query',
+                'Searching Wikipedia',
+                'Extracting Content',
+                'Synthesizing Narrative',
+                'Finalizing Report'
+            ]
+        };
+
+        let currentLanguage = 'english';
+        let neuralAnimation = null;
+        let searchInProgress = false;
+
+        // Helper function for fetch with timeout
+        async function fetchWithTimeout(url, timeout = 10000) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+
+        // Language codes for translation
+        const LANG_CODE_MAP = {
+            english: 'en',
+            hindi: 'hi',
+            bengali: 'bn',
+            french: 'fr',
+            german: 'de'
+        };
+
+        // Detect language of text
+        async function detectLanguage(text) {
+            try {
+                const response = await fetch(
+                    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.substring(0, 100))}&langpair=en|en`
+                );
+                const data = await response.json();
+                
+                // Simple heuristic-based detection
+                if (/[\u0900-\u097F]/.test(text)) return 'hi'; // Devanagari script (Hindi)
+                if (/[\u0980-\u09FF]/.test(text)) return 'bn'; // Bengali script
+                if (/[\u0370-\u03FF]/.test(text)) return 'el'; // Greek
+                if (/[ñáéíóúü]/.test(text.toLowerCase())) return 'es'; // Spanish
+                if (/[àâäéèêëïîôöùûüœæç]/.test(text.toLowerCase())) return 'fr'; // French
+                if (/[äöüß]/.test(text.toLowerCase())) return 'de'; // German
+                
+                // Default to English if no special characters detected
+                return 'en';
+            } catch (error) {
+                console.warn('Language detection error:', error);
+                return 'en';
+            }
+        }
+
+        // Translate text using MyMemory API
+        async function translateText(text, fromLang, toLang) {
+            if (fromLang === toLang || !text) return text;
+            
+            try {
+                // Map language codes for MyMemory API
+                const langMap = {
+                    'en': 'en',
+                    'hi': 'hi',
+                    'bn': 'bn',
+                    'fr': 'fr',
+                    'de': 'de',
+                    'el': 'el',
+                    'es': 'es'
+                };
+                
+                const from = langMap[fromLang] || 'en';
+                const to = langMap[toLang] || 'en';
+                
+                const response = await fetch(
+                    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
+                );
+                
+                const data = await response.json();
+                
+                if (data.responseStatus === 200) {
+                    return data.responseData.translatedText || text;
+                }
+                return text;
+            } catch (error) {
+                console.warn('Translation error:', error);
+                return text; // Return original text if translation fails
+            }
+        }
+
+        // Process and translate query if needed
+        async function processQueryForLanguage(userQuery, selectedLanguage) {
+            const selectedLangCode = LANG_CODE_MAP[selectedLanguage];
+            
+            // Detect input language
+            const detectedLang = await detectLanguage(userQuery);
+            
+            // If detected language is different from selected, translate
+            let processedQuery = userQuery;
+            if (detectedLang !== selectedLangCode) {
+                processedQuery = await translateText(userQuery, detectedLang, selectedLangCode);
+            }
+            
+            return {
+                originalQuery: userQuery,
+                processedQuery: processedQuery,
+                detectedLanguage: detectedLang,
+                targetLanguage: selectedLangCode,
+                wasTranslated: detectedLang !== selectedLangCode
+            };
+        }
+
+        // Initialize languages on page load
+        function initializeLanguages() {
+            const container = document.getElementById('languageContainer');
+            container.innerHTML = '';
+            
+            Object.entries(CONFIG.languages).forEach(([key, lang], index) => {
+                const card = document.createElement('div');
+                card.className = 'language-card' + (key === 'english' ? ' active' : ' disabled');
+                card.dataset.language = key;
+                card.textContent = lang.name;
+                card.onclick = () => selectLanguage(key);
+                card.style.animationDelay = (index * 0.1) + 's';
+                container.appendChild(card);
+            });
+        }
+
+        // 3D Neural Network Animation - Dynamic based on search complexity
+        class NeuralNetworkAnimation {
+            constructor(canvas, complexity = 1) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.neurons = [];
+                this.connections = [];
+                this.signals = [];
+                this.animationFrame = null;
+                this.time = 0;
+                this.complexity = Math.max(1, Math.min(complexity, 3));
+                
+                this.resize();
+                this.createNetwork();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width * dpr;
+                this.canvas.height = rect.height * dpr;
+                this.ctx.scale(dpr, dpr);
+                this.width = rect.width;
+                this.height = rect.height;
+            }
+
+            createNetwork() {
+                const layers = 3 + Math.floor(this.complexity);
+                const neuronsPerLayer = 4 + Math.floor(this.complexity * 2);
+                
+                for (let layer = 0; layer < layers; layer++) {
+                    for (let i = 0; i < neuronsPerLayer; i++) {
+                        this.neurons.push({
+                            x: (layer / (layers - 1)) * this.width * 0.8 + this.width * 0.1,
+                            y: (i / (neuronsPerLayer - 1)) * this.height * 0.8 + this.height * 0.1,
+                            z: Math.sin(layer * 0.5) * 50,
+                            layer: layer,
+                            index: i,
+                            activation: 0,
+                            targetActivation: 0
+                        });
+                    }
+                }
+
+                for (let i = 0; i < this.neurons.length; i++) {
+                    const neuron = this.neurons[i];
+                    if (neuron.layer < layers - 1) {
+                        for (let j = 0; j < this.neurons.length; j++) {
+                            const other = this.neurons[j];
+                            if (other.layer === neuron.layer + 1) {
+                                this.connections.push({
+                                    from: i,
+                                    to: j,
+                                    strength: Math.random() * 0.5 + 0.5
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            fireSignal() {
+                const inputNeurons = this.neurons.filter(n => n.layer === 0);
+                const startNeuron = inputNeurons[Math.floor(Math.random() * inputNeurons.length)];
+                const startIndex = this.neurons.indexOf(startNeuron);
+                
+                this.signals.push({
+                    neuronIndex: startIndex,
+                    progress: 0,
+                    path: this.findPath(startIndex)
+                });
+                
+                startNeuron.targetActivation = 1;
+            }
+
+            findPath(startIndex) {
+                const path = [startIndex];
+                let currentIndex = startIndex;
+                const maxLayer = Math.max(...this.neurons.map(n => n.layer));
+                
+                while (this.neurons[currentIndex].layer < maxLayer) {
+                    const possibleConnections = this.connections.filter(c => c.from === currentIndex);
+                    if (possibleConnections.length === 0) break;
+                    
+                    const nextConnection = possibleConnections[Math.floor(Math.random() * possibleConnections.length)];
+                    currentIndex = nextConnection.to;
+                    path.push(currentIndex);
+                }
+                
+                return path;
+            }
+
+            update() {
+                this.time += 0.016;
+
+                if (Math.random() < 0.05 * this.complexity) {
+                    this.fireSignal();
+                }
+
+                this.signals = this.signals.filter(signal => {
+                    signal.progress += 0.02;
+                    
+                    if (signal.progress >= 1 && signal.path.length > 1) {
+                        signal.path.shift();
+                        signal.progress = 0;
+                        
+                        const nextNeuron = this.neurons[signal.path[0]];
+                        nextNeuron.targetActivation = 1;
+                    }
+                    
+                    return signal.path.length > 0;
+                });
+
+                this.neurons.forEach(neuron => {
+                    neuron.activation += (neuron.targetActivation - neuron.activation) * 0.1;
+                    neuron.targetActivation *= 0.95;
+                });
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+
+                this.connections.forEach(conn => {
+                    const from = this.neurons[conn.from];
+                    const to = this.neurons[conn.to];
+                    
+                    this.ctx.strokeStyle = `rgba(212, 175, 55, ${0.1 * conn.strength})`;
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(from.x, from.y);
+                    this.ctx.lineTo(to.x, to.y);
+                    this.ctx.stroke();
+                });
+
+                this.signals.forEach(signal => {
+                    if (signal.path.length > 1) {
+                        const from = this.neurons[signal.path[0]];
+                        const to = this.neurons[signal.path[1]];
+                        
+                        const x = from.x + (to.x - from.x) * signal.progress;
+                        const y = from.y + (to.y - from.y) * signal.progress;
+                        
+                        const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, 8);
+                        gradient.addColorStop(0, 'rgba(212, 175, 55, 1)');
+                        gradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
+                        
+                        this.ctx.fillStyle = gradient;
+                        this.ctx.beginPath();
+                        this.ctx.arc(x, y, 8, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                });
+
+                this.neurons.forEach(neuron => {
+                    const baseSize = 4;
+                    const size = baseSize + neuron.activation * 8;
+                    const alpha = 0.3 + neuron.activation * 0.7;
+                    
+                    const gradient = this.ctx.createRadialGradient(neuron.x, neuron.y, 0, neuron.x, neuron.y, size);
+                    gradient.addColorStop(0, `rgba(212, 175, 55, ${alpha})`);
+                    gradient.addColorStop(1, `rgba(212, 175, 55, ${alpha * 0.3})`);
+                    
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(neuron.x, neuron.y, size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+            }
+
+            start() {
+                const animate = () => {
+                    this.update();
+                    this.draw();
+                    this.animationFrame = requestAnimationFrame(animate);
+                };
+                animate();
+            }
+
+            stop() {
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                    this.animationFrame = null;
+                }
+            }
+        }
+
+        // Enhanced Thought Chain with dynamic steps
+        class ThoughtChain {
+            constructor(container) {
+                this.container = container;
+                this.steps = [];
+                this.currentStep = 0;
+            }
+
+            addStep(title, detail = '', delay = 0) {
+                const stepNumber = this.steps.length + 1;
+                const stepElement = document.createElement('div');
+                stepElement.className = 'thought-step';
+                stepElement.style.animationDelay = (delay / 1000) + 's';
+                
+                stepElement.innerHTML = `
+                    <div class="step-icon" id="step-icon-${stepNumber}">
+                        ${stepNumber}
+                    </div>
+                    <div class="step-content">
+                        <div class="step-title">${title}</div>
+                        <div class="step-detail" id="step-detail-${stepNumber}">${detail}</div>
+                    </div>
+                `;
+                
+                if (stepNumber === 1) {
+                    stepElement.querySelector('.step-icon').classList.add('active');
+                }
+                
+                this.container.appendChild(stepElement);
+                this.steps.push({ title, detail, element: stepElement });
+                
+                return stepNumber;
+            }
+
+            updateStep(stepNumber, detail, success = false) {
+                if (this.steps[stepNumber - 1]) {
+                    const detailElement = document.getElementById(`step-detail-${stepNumber}`);
+                    if (detailElement) {
+                        detailElement.textContent = detail;
+                        if (success) {
+                            detailElement.classList.add('success');
+                        }
+                    }
+                }
+            }
+
+            completeStep(stepNumber) {
+                const iconElement = document.getElementById(`step-icon-${stepNumber}`);
+                if (iconElement) {
+                    iconElement.classList.remove('active');
+                    iconElement.classList.add('completed');
+                    iconElement.innerHTML = '✓';
+                }
+                
+                const nextIcon = document.getElementById(`step-icon-${stepNumber + 1}`);
+                if (nextIcon) {
+                    nextIcon.classList.add('active');
+                }
+            }
+
+            clear() {
+                this.container.innerHTML = '';
+                this.steps = [];
+                this.currentStep = 0;
+            }
+        }
+
+        // Input validation and optimization
+        function validateAndOptimizeQuery(query) {
+            const errors = [];
+            const warnings = [];
+            
+            // Trim whitespace
+            query = query.trim();
+            
+            // Check length
+            if (query.length < CONFIG.contentLimits.minQueryLength) {
+                errors.push(`Query must be at least ${CONFIG.contentLimits.minQueryLength} characters long`);
+            }
+            
+            if (query.length > CONFIG.contentLimits.maxQueryLength) {
+                errors.push(`Query cannot exceed ${CONFIG.contentLimits.maxQueryLength} characters`);
+            }
+            
+            // Check for valid characters
+            if (!/^[a-zA-Z0-9\s\-'.,&()]+$/.test(query)) {
+                warnings.push('Query contains special characters which may affect results');
+            }
+            
+            // Normalize whitespace
+            query = query.replace(/\s+/g, ' ');
+            
+            return { query, errors, warnings };
+        }
+
+        function displaySearchError(message) {
+            const errorElement = document.getElementById('searchError');
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+            setTimeout(() => {
+                errorElement.classList.remove('show');
+            }, 4000);
+        }
+
+        function selectLanguage(lang) {
+            const langConfig = CONFIG.languages[lang];
+            if (!langConfig) return;
+            
+            currentLanguage = lang;
+            
+            // Update card states
+            document.querySelectorAll('.language-card').forEach(card => {
+                card.classList.remove('active');
+                card.classList.add('disabled');
+            });
+            document.querySelector(`[data-language="${lang}"]`).classList.remove('disabled');
+            document.querySelector(`[data-language="${lang}"]`).classList.add('active');
+            
+            document.getElementById('landing').style.display = 'none';
+            document.getElementById('searchScreen').classList.add('active');
+            document.getElementById('searchInput').focus();
+        }
+
+        function goBack() {
+            document.getElementById('searchScreen').classList.remove('active');
+            document.getElementById('landing').style.display = 'flex';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchError').classList.remove('show');
+        }
+
+        function goToSearch() {
+            document.getElementById('resultsScreen').classList.remove('active');
+            document.getElementById('searchScreen').classList.add('active');
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchInput').focus();
+        }
+
+        // Synonym handling for better search results - works with multiple languages
+        function expandQueryWithSynonyms(query) {
+            const synonymMap = {
+                'general relativity': ['general theory of relativity', 'einstein gr', 'einsteinian relativity'],
+                'machine learning': ['ml', 'artificial intelligence', 'ai learning'],
+                'neural network': ['neural net', 'artificial neural network'],
+                'quantum mechanics': ['quantum physics', 'quantum theory'],
+                'artificial intelligence': ['ai', 'machine intelligence'],
+                'climate change': ['global warming', 'climate crisis'],
+                'evolution': ['darwinian evolution', 'natural selection'],
+                'dna': ['deoxyribonucleic acid', 'genetic material'],
+                'covid': ['coronavirus', 'covid-19', 'sars-cov-2'],
+                'world war': ['ww', 'great war']
+            };
+
+            const lowerQuery = query.toLowerCase();
+            
+            for (const [key, synonyms] of Object.entries(synonymMap)) {
+                if (lowerQuery.includes(key) || synonyms.some(syn => lowerQuery.includes(syn))) {
+                    return [query, key, ...synonyms].slice(0, CONFIG.contentLimits.maxSearchVariations);
+                }
+            }
+            
+            // For multilingual queries, return just the main query plus variations
+            return [query];
+        }
+
+        // Disambigation handler - detect and handle disambiguation pages
+        async function resolveDisambiguation(title, langCode) {
+            try {
+                const url = `https://${langCode}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=categories&format=json&origin=*`;
+                const response = await fetch(url);
+                const data = await response.json();
+                const pages = data.query.pages;
+                const pageId = Object.keys(pages)[0];
+                
+                if (pages[pageId].categories) {
+                    const isDisambig = pages[pageId].categories.some(cat => 
+                        cat['*'].toLowerCase().includes('disambiguation')
+                    );
+                    return !isDisambig;
+                }
+                return true;
+            } catch {
+                return true;
+            }
+        }
+
+        // Enhanced content extraction with images and semantic grouping
+        function extractSemanticallyGroupedContent(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const sections = [];
+            let currentSection = null;
+            
+            // Extract main sections with better structure
+            doc.querySelectorAll('h1, h2, h3, p, table, ul, li').forEach(elem => {
+                if (elem.tagName.match(/^H[1-3]$/)) {
+                    if (currentSection) sections.push(currentSection);
+                    currentSection = {
+                        title: elem.textContent.trim(),
+                        content: [],
+                        type: 'section'
+                    };
+                } else if (currentSection) {
+                    if (elem.tagName === 'P') {
+                        currentSection.content.push({
+                            type: 'text',
+                            value: elem.textContent.trim()
+                        });
+                    } else if (elem.tagName === 'TABLE') {
+                        currentSection.content.push({
+                            type: 'table',
+                            value: elem.outerHTML
+                        });
+                    }
+                }
+            });
+            
+            if (currentSection) sections.push(currentSection);
+            return sections;
+        }
+
+        // Extract images based on article content
+        // Enhanced image extraction using Wikipedia API
+        async function extractImages(title, langCode, maxImages = 2) {
+            const images = [];
+            
+            try {
+                // Get page images using pageimages property
+                const imageUrl = `https://${langCode}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=300&format=json&origin=*`;
+                const imageResponse = await fetch(imageUrl);
+                const imageData = await imageResponse.json();
+                const pages = imageData.query.pages;
+                const pageId = Object.keys(pages)[0];
+                
+                if (pages[pageId].thumbnail) {
+                    images.push({
+                        src: pages[pageId].thumbnail.source,
+                        alt: title,
+                        width: pages[pageId].thumbnail.width,
+                        height: pages[pageId].thumbnail.height
+                    });
+                }
+                
+                // Get additional images from the article
+                if (images.length < maxImages) {
+                    const imagesUrl = `https://${langCode}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=images&imlimit=10&format=json&origin=*`;
+                    const imagesResponse = await fetch(imagesUrl);
+                    const imagesData = await imagesResponse.json();
+                    const pages2 = imagesData.query.pages;
+                    const pageId2 = Object.keys(pages2)[0];
+                    
+                    if (pages2[pageId2].images) {
+                        const imageFiles = pages2[pageId2].images.slice(0, 5);
+                        
+                        for (const imageFile of imageFiles) {
+                            if (images.length >= maxImages) break;
+                            
+                            const fileName = imageFile.title.replace(/^File:/, '');
+                            
+                            // Skip common non-content files
+                            if (fileName.toLowerCase().includes('wikimedia') ||
+                                fileName.toLowerCase().includes('speaker') ||
+                                fileName.toLowerCase().includes('audio') ||
+                                fileName.toLowerCase().includes('logo') ||
+                                fileName.toLowerCase().includes('.svg')) {
+                                continue;
+                            }
+                            
+                            // Get the actual image URL
+                            const imageInfoUrl = `https://${langCode}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(imageFile.title)}&prop=imageinfo&iiprop=url|size&iiurlwidth=300&format=json&origin=*`;
+                            const infoResponse = await fetch(imageInfoUrl);
+                            const infoData = await infoResponse.json();
+                            const infoPages = infoData.query.pages;
+                            const infoPageId = Object.keys(infoPages)[0];
+                            
+                            if (infoPages[infoPageId].imageinfo && infoPages[infoPageId].imageinfo[0]) {
+                                const imgInfo = infoPages[infoPageId].imageinfo[0];
+                                images.push({
+                                    src: imgInfo.thumburl || imgInfo.url,
+                                    alt: fileName,
+                                    width: imgInfo.thumbwidth || imgInfo.width,
+                                    height: imgInfo.thumbheight || imgInfo.height
+                                });
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn(`Failed to extract images for ${title}:`, error);
+            }
+            
+            return images;
+        }
+
+        // Extract and format tables dynamically
+        function extractTablesFromHTML(html, articleLength) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const tables = doc.querySelectorAll('table.wikitable');
+            
+            // Determine table limit based on article content
+            const tableLimit = Math.max(1, Math.min(Math.ceil(tables.length / 3), 3));
+            const extractedTables = [];
+            
+            tables.forEach((table, index) => {
+                if (index < tableLimit) {
+                    const rows = table.querySelectorAll('tr');
+                    const rowLimit = Math.max(4, Math.min(rows.length, 10));
+                    let tableHTML = '<table>';
+                    
+                    rows.forEach((row, rowIndex) => {
+                        if (rowIndex < rowLimit) {
+                            const cells = row.querySelectorAll('th, td');
+                            tableHTML += '<tr>';
+                            cells.forEach(cell => {
+                                const tag = cell.tagName.toLowerCase();
+                                const text = cell.textContent.trim();
+                                tableHTML += `<${tag}>${text}</${tag}>`;
+                            });
+                            tableHTML += '</tr>';
+                        }
+                    });
+                    
+                    tableHTML += '</table>';
+                    extractedTables.push(tableHTML);
+                }
+            });
+            
+            return extractedTables;
+        }
+
+        // Enhanced math extraction with proper handling
+        function extractMathFromHTML(html, articleLength) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const mathElements = doc.querySelectorAll('.mwe-math-element, .mw-math-mathml');
+            
+            const mathLimit = Math.max(1, Math.min(Math.ceil(mathElements.length / 2), 5));
+            const equations = [];
+            
+            mathElements.forEach((elem, index) => {
+                if (index < mathLimit) {
+                    const img = elem.querySelector('img');
+                    if (img && img.alt) {
+                        equations.push(img.alt);
+                    }
+                }
+            });
+            
+            return equations;
+        }
+
+        // Generate APA formatted citations
+        function generateAPACitation(article, index) {
+            const title = article.title || 'Unknown';
+            const url = article.url || '#';
+            const date = new Date().toISOString().split('T')[0];
+            
+            return `Wikipedia. (${date}). ${title}. Retrieved from ${url}`;
+        }
+
+        // Enhanced narrative generation with semantic grouping
+        async function generateEnhancedNarrative(query, articles) {
+            if (articles.length === 0) return "No information found.";
+
+            let narrative = "";
+            const usedSentences = new Set();
+            
+            function cleanText(text) {
+                text = text.replace(/={2,}[^=]*={2,}/g, '');
+                text = text.replace(/\[\d+\]/g, '');
+                text = text.replace(/\s+/g, ' ');
+                return text.trim();
+            }
+            
+            function addCitation(sourceIndex) {
+                return `<sup class="citation" data-ref="${sourceIndex + 1}">[${sourceIndex + 1}]</sup>`;
+            }
+
+            // Build sentence pool
+            const sentencePool = [];
+            articles.forEach((article, sourceIndex) => {
+                const cleanedText = cleanText(article.extract);
+                const sentences = cleanedText.split(/[.!?]+/).filter(s => s.trim().length > CONFIG.contentLimits.sentenceMinLength);
+                
+                const sentenceLimit = Math.max(5, Math.ceil(20 / articles.length));
+                sentences.slice(0, sentenceLimit).forEach(sentence => {
+                    const trimmed = sentence.trim();
+                    if (!usedSentences.has(trimmed) && trimmed.length > CONFIG.contentLimits.sentenceMinLength) {
+                        sentencePool.push({
+                            text: trimmed,
+                            sourceIndex: sourceIndex
+                        });
+                        usedSentences.add(trimmed);
+                    }
+                });
+            });
+
+            if (sentencePool.length === 0) {
+                return "<p>Unable to extract meaningful content from sources.</p>";
+            }
+
+            // Introduction
+            const introParagraph = sentencePool.slice(0, Math.ceil(sentencePool.length * 0.15)).map(s => 
+                `${s.text}.${addCitation(s.sourceIndex)}`
+            ).join(' ');
+            narrative += `<p>${introParagraph}</p>`;
+
+            // Extract and add mathematical equations
+            const allEquations = [];
+            articles.forEach(article => {
+                const equations = extractMathFromHTML(article.html, article.extract.length);
+                allEquations.push(...equations);
+            });
+
+            if (allEquations.length > 0) {
+                narrative += '<h3 class="section-header">Key Mathematical Relationships</h3>';
+                allEquations.forEach(eq => {
+                    narrative += `<div class="math-equation">\\[${eq}\\]</div>`;
+                });
+            }
+
+            // Extract and add images
+            const allImages = [];
+            const langCode = CONFIG.languages[currentLanguage].code;
+            
+            for (let idx = 0; idx < articles.length; idx++) {
+                const article = articles[idx];
+                const imageCount = Math.max(1, Math.ceil(3 / articles.length));
+                const images = await extractImages(article.title, langCode, imageCount);
+                allImages.push(...images);
+                if (allImages.length >= 5) break; // Limit total images
+            }
+
+            if (allImages.length > 0) {
+                narrative += '<h3 class="section-header">Visual Reference</h3>';
+                allImages.slice(0, 3).forEach(img => {
+                    narrative += `<img src="${img.src}" alt="${img.alt}" loading="lazy" style="max-width: 100%; height: auto;">`;
+                });
+            }
+
+            // Main content paragraphs with semantic grouping
+            const remainingSentences = sentencePool.slice(Math.ceil(sentencePool.length * 0.15));
+            const maxParagraphs = Math.max(3, Math.ceil(articles.length * 1.5));
+            const paragraphSize = Math.max(3, Math.ceil(remainingSentences.length / maxParagraphs));
+            
+            for (let i = 0; i < maxParagraphs; i++) {
+                const start = i * paragraphSize;
+                const end = Math.min(start + paragraphSize, remainingSentences.length);
+                const paragraphSentences = remainingSentences.slice(start, end);
+                
+                if (paragraphSentences.length > 0) {
+                    const paragraph = paragraphSentences.map(s => 
+                        `${s.text}.${addCitation(s.sourceIndex)}`
+                    ).join(' ');
+                    narrative += `<p>${paragraph}</p>`;
+                }
+            }
+
+            // Extract and add tables
+            const allTables = [];
+            articles.forEach(article => {
+                const tables = extractTablesFromHTML(article.html, article.extract.length);
+                allTables.push(...tables);
+            });
+
+            if (allTables.length > 0) {
+                narrative += '<h3 class="section-header">Summary Data</h3>';
+                allTables.slice(0, 2).forEach(table => {
+                    narrative += table;
+                });
+            }
+
+            // Conclusion
+            const conclusion = `This comprehensive analysis synthesizes information from ${articles.length} Wikipedia article${articles.length > 1 ? 's' : ''}, providing an in-depth exploration of ${query}. The research combines textual analysis`;
+            if (allEquations.length > 0) narrative += ', mathematical formulations';
+            if (allImages.length > 0) narrative += ', and visual references';
+            if (allTables.length > 0) narrative += ', and tabular data';
+            narrative += ' to offer a complete understanding of the topic.';
+            
+            narrative += `<p>${conclusion}</p>`;
+
+            return narrative;
+        }
+
+        function showResults(query, narrative, references, sourceCount) {
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('resultsContainer').style.display = 'block';
+
+            document.getElementById('researchTitle').textContent = `Research Synopsis: ${query}`;
+            document.getElementById('researchQuery').textContent = `Query: "${query}"`;
+            document.getElementById('researchMeta').textContent = `Synthesized from ${sourceCount} Wikipedia source${sourceCount > 1 ? 's' : ''}`;
+            document.getElementById('narrative').innerHTML = narrative;
+
+            if (window.MathJax) {
+                MathJax.typesetPromise().catch(() => {});
+            }
+
+            const referencesHtml = references.map(ref => 
+                `<div class="reference" id="ref-${ref.number}">
+                    ${generateAPACitation(ref, ref.number)}
+                </div>`
+            ).join('');
+            document.getElementById('references').innerHTML = referencesHtml;
+            
+            // Add click handlers to citations
+            document.querySelectorAll('.citation').forEach(citation => {
+                citation.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const refNum = this.getAttribute('data-ref');
+                    const refElement = document.getElementById(`ref-${refNum}`);
+                    if (refElement) {
+                        refElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        refElement.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
+                        setTimeout(() => {
+                            refElement.style.backgroundColor = '';
+                        }, 2000);
+                    }
+                });
+            });
+        }
+
+        async function performSearch() {
+            if (searchInProgress) return;
+            
+            const rawQuery = document.getElementById('searchInput').value;
+            const { query, errors } = validateAndOptimizeQuery(rawQuery);
+            
+            if (errors.length > 0) {
+                displaySearchError(errors[0]);
+                return;
+            }
+
+            searchInProgress = true;
+            document.getElementById('searchBtn').disabled = true;
+
+            document.getElementById('searchScreen').classList.remove('active');
+            document.getElementById('resultsScreen').classList.add('active');
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('resultsContainer').style.display = 'none';
+
+            const langCode = CONFIG.languages[currentLanguage].code;
+            const canvas = document.getElementById('neuralCanvas');
+            const thoughtChain = new ThoughtChain(document.getElementById('thoughtChain'));
+
+            try {
+                // Step 1: Process and translate query if needed
+                thoughtChain.addStep(CONFIG.searchSteps[0], `Processing: "${query}"`);
+                await new Promise(resolve => setTimeout(resolve, 400));
+                
+                const queryInfo = await processQueryForLanguage(query, currentLanguage);
+                const searchQuery = queryInfo.processedQuery;
+                const translationMessage = queryInfo.wasTranslated 
+                    ? ` (translated from detected language)`
+                    : '';
+                
+                thoughtChain.updateStep(1, `Query prepared${translationMessage}`, true);
+                thoughtChain.completeStep(1);
+
+                const queryVariations = expandQueryWithSynonyms(searchQuery);
+                const searchComplexity = Math.min(3, Math.ceil(queryVariations.length / 2));
+                neuralAnimation = new NeuralNetworkAnimation(canvas, searchComplexity);
+                neuralAnimation.start();
+
+                // Step 2: Search Wikipedia
+                thoughtChain.addStep(CONFIG.searchSteps[1], 'Initiating API requests...', 200);
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                let allArticles = [];
+                const seenTitles = new Set();
+                const totalSearches = Math.min(CONFIG.contentLimits.maxSearchVariations, queryVariations.length);
+
+                for (let i = 0; i < totalSearches; i++) {
+                    const searchVariation = queryVariations[i];
+                    thoughtChain.updateStep(2, `Searching variation ${i + 1}/${totalSearches}: "${searchVariation}"`);
+                    
+                    try {
+                        // Try direct Wikipedia search first
+                        const searchUrl = `https://${langCode}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(searchVariation)}&limit=10&namespace=0&format=json&origin=*`;
+                        const searchResponse = await fetchWithTimeout(searchUrl);
+                        
+                        if (!searchResponse.ok) {
+                            console.warn(`Search failed for ${langCode}:`, searchResponse.status);
+                            continue;
+                        }
+                        
+                        const searchData = await searchResponse.json();
+
+                        const titles = searchData[1] || [];
+                        const descriptions = searchData[2] || [];
+                        const urls = searchData[3] || [];
+
+                        if (titles.length === 0) {
+                            // If no results in target language, translate back to English and try
+                            if (langCode !== 'en') {
+                                const translatedToEn = await translateText(searchVariation, langCode, 'en');
+                                const enSearchUrl = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(translatedToEn)}&limit=10&namespace=0&format=json&origin=*`;
+                                const enSearchResponse = await fetchWithTimeout(enSearchUrl);
+                                const enSearchData = await enSearchResponse.json();
+                                
+                                if (enSearchData[1] && enSearchData[1].length > 0) {
+                                    // Found in English Wikipedia, will translate results later
+                                    titles.push(...enSearchData[1]);
+                                    descriptions.push(...enSearchData[2]);
+                                    urls.push(...enSearchData[3]);
+                                }
+                            }
+                        }
+
+                        const uniqueTitles = [];
+                        for (let j = 0; j < titles.length; j++) {
+                            const title = titles[j];
+                            if (!seenTitles.has(title)) {
+                                seenTitles.add(title);
+                                uniqueTitles.push({ title, url: urls[j], description: descriptions[j] });
+                                if (uniqueTitles.length >= CONFIG.contentLimits.maxArticles) break;
+                            }
+                        }
+
+                        const contentPromises = uniqueTitles.map(async (titleInfo) => {
+                            try {
+                                // Determine which Wikipedia to query
+                                let queryLangCode = langCode;
+                                let title = titleInfo.title;
+                                
+                                // Try target language first
+                                let contentUrl = `https://${queryLangCode}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=extracts&explaintext=true&format=json&origin=*`;
+                                let response = await fetchWithTimeout(contentUrl);
+                                let data = await response.json();
+                                let pages = data.query.pages;
+                                let pageId = Object.keys(pages)[0];
+                                
+                                // If no results and not English, try English Wikipedia
+                                if (!pages[pageId].extract && queryLangCode !== 'en') {
+                                    contentUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=extracts&explaintext=true&format=json&origin=*`;
+                                    response = await fetchWithTimeout(contentUrl);
+                                    data = await response.json();
+                                    pages = data.query.pages;
+                                    pageId = Object.keys(pages)[0];
+                                    queryLangCode = 'en'; // Mark as English content
+                                }
+                                
+                                let extract = pages[pageId].extract || titleInfo.description || '';
+                                
+                                // Translate extract if it was from English and target is not English
+                                if (queryLangCode === 'en' && langCode !== 'en') {
+                                    extract = await translateText(extract, 'en', langCode);
+                                }
+                                
+                                // Get HTML for images and tables
+                                const htmlUrl = `https://${queryLangCode}.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(titleInfo.title)}&prop=text&format=json&origin=*`;
+                                const htmlResponse = await fetchWithTimeout(htmlUrl);
+                                const htmlData = await htmlResponse.json();
+                                
+                                return {
+                                    title: titleInfo.title,
+                                    extract: extract,
+                                    html: htmlData.parse?.text?.['*'] || '',
+                                    url: titleInfo.url || `https://${queryLangCode}.wikipedia.org/wiki/${encodeURIComponent(titleInfo.title)}`
+                                };
+                            } catch (error) {
+                                console.warn(`Failed to fetch content for ${titleInfo.title}:`, error);
+                                return null;
+                            }
+                        });
+
+                        const articles = (await Promise.all(contentPromises)).filter(a => a !== null);
+                        allArticles = allArticles.concat(articles);
+                    } catch (error) {
+                        console.warn(`Search variation ${i + 1} failed:`, error);
+                        continue;
+                    }
+                }
+
+                thoughtChain.updateStep(2, `Found ${allArticles.length} unique article${allArticles.length > 1 ? 's' : ''}`, true);
+                thoughtChain.completeStep(2);
+
+                if (allArticles.length === 0) {
+                    thoughtChain.addStep('Search Complete', 'No results found', 200);
+                    neuralAnimation.stop();
+                    showResults(query, "No results found. Please try different keywords.", [], 0);
+                    searchInProgress = false;
+                    document.getElementById('searchBtn').disabled = false;
+                    return;
+                }
+
+                // Step 3: Extract content
+                thoughtChain.addStep(CONFIG.searchSteps[2], 'Processing article data...', 400);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                thoughtChain.updateStep(3, `Analyzing ${allArticles.length} source${allArticles.length > 1 ? 's' : ''} for key information`, true);
+                thoughtChain.completeStep(3);
+
+                // Step 4: Generate narrative
+                thoughtChain.addStep(CONFIG.searchSteps[3], 'Combining information from multiple sources...', 600);
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                const narrative = await generateEnhancedNarrative(query, allArticles);
+                const references = allArticles.map((article, index) => ({
+                    number: index + 1,
+                    title: article.title,
+                    url: article.url
+                }));
+
+                thoughtChain.updateStep(4, 'Research synthesis complete!', true);
+                thoughtChain.completeStep(4);
+
+                // Step 5: Finalize
+                thoughtChain.addStep(CONFIG.searchSteps[4], 'Preparing results...', 800);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                thoughtChain.updateStep(5, 'Report ready!', true);
+                thoughtChain.completeStep(5);
+
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                neuralAnimation.stop();
+                showResults(query, narrative, references, allArticles.length);
+
+            } catch (error) {
+                console.error('Search error:', error);
+                thoughtChain.addStep('Error Occurred', error.message, 200);
+                if (neuralAnimation) neuralAnimation.stop();
+                showResults(query, "An error occurred during research. Please try again with different keywords.", [], 0);
+            } finally {
+                searchInProgress = false;
+                document.getElementById('searchBtn').disabled = false;
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeLanguages();
+        });
+    </script>
+</body>
+</html>
